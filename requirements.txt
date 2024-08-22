@@ -4,3 +4,4 @@ streamlit_extras
 torch
 Pillow
 transformers
+pymupdf
