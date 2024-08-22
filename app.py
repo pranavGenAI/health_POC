@@ -95,14 +95,15 @@ def generate_content(content):
         try:
             print("Model definition")
             model = genai.GenerativeModel('gemini-1.5-pro')
-            prompt = """You have been given an insurance certificate as input. Now you will help me in extracting the following information.
-            1. Name
-            2. Policy no
-            3. Policy Expiration date
-            4. Coverage Limit Amount (in dollars)
-            
-            Check for the above information and then write the table with data also add rationale in the end.        
+            prompt = """You have been given an insurance certificate as input. Now you will help me in extracting the text and return the text.
             """
+            # 1. Name
+            # 2. Policy no
+            # 3. Policy Expiration date
+            # 4. Coverage Limit Amount (in dollars)
+            
+            # Check for the above information and then write the table with data also add rationale in the end.        
+            # """
             print("Model generate")
             response = model.generate_content([prompt, content], stream=True)
             response.resolve()
