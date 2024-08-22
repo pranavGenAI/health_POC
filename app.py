@@ -13,12 +13,14 @@ def pdf_to_images(pdf_file):
         page = pdf_document.load_page(page_number)
         # Render page to an image
         pix = page.get_pixmap()
-        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        
         # Save image to a BytesIO object
         img_byte_arr = io.BytesIO()
-        img.save(img_byte_arr, format='PNG')
-        images.append(img_byte_arr.getvalue())
+        pix.save(img_byte_arr, format='PNG')
+        img_byte_arr.seek(0)  # Reset the stream position to the beginning
+        
+        # Open image using PIL.Image.open
+        img = Image.open(img_byte_arr)
+        images.append(img)
 
     return images
 
@@ -33,8 +35,8 @@ def main():
         images = pdf_to_images(pdf_file)
         
         # Display each image
-        for i, img_data in enumerate(images):
-            st.image(img_data, caption=f'Page {i+1}', use_column_width=True)
+        for i, img in enumerate(images):
+            st.image(img, caption=f'Page {i+1}', use_column_width=True)
 
 if __name__ == "__main__":
     main()
