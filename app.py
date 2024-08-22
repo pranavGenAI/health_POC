@@ -14,7 +14,7 @@ def pdf_to_images(pdf_file):
     images = []
 
     model = genai.GenerativeModel('gemini-1.5-pro')
-    
+    text =""
     for page_number in range(len(pdf_document)):
         # Get a page
         page = pdf_document.load_page(page_number)
@@ -30,9 +30,8 @@ def pdf_to_images(pdf_file):
         print("Generating content...")
         response = model.generate_content([prompt, img], stream=True)  # Ensure correct usage as per documentation
         response.resolve()
-        st.write("Response text", response.text)
-        
-    return images
+        text += response.text
+    return text
 
 
 def main():
@@ -43,7 +42,16 @@ def main():
 
     if pdf_file:
         # Convert PDF pages to images
-        images = pdf_to_images(pdf_file)
+        text = pdf_to_images(pdf_file)
+        model = genai.GenerativeModel("gemini-1.5-pro")
+        response = model.generate_content("""
+        You have been given the text and now extract the following information:
+        1.	Name
+        2.	Policy no
+        3.	Policy Expiration date
+        4.	Coverage Limit Amount (in dollar)
+        """)
+        st.write(response.text)
         
 
 if __name__ == "__main__":
