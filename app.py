@@ -2,6 +2,7 @@ import streamlit as st
 import fitz  # PyMuPDF
 from PIL import Image
 import io
+import base64
 import google.generativeai as genai
 
 # Configure the Google Generative AI API
@@ -24,25 +25,22 @@ def pdf_to_images(pdf_file):
         img.save(buffer, format="PNG")
         buffer.seek(0)
         
-        # Create a PIL Image object from the buffer
-        img_pil = Image.open(buffer)
-        
-        # Convert the PIL image to a format acceptable by the API
-        img_buffer = io.BytesIO()
-        img_pil.save(img_buffer, format="PNG")
-        img_buffer.seek(0)
+        # Convert the image to base64 encoding
+        img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
         # Initialize the Google Gemini model
         model = genai.GenerativeModel('gemini-1.5-pro')
         prompt = "Extract the text from this image and return only that."
         
         # Generate content using the image
-        print("Model generate")
-        response = model.generate_content([prompt, img_buffer], stream=True)
-        response.resolve()
-        
-        st.write(f"Response text for Page {page_num + 1}:", response.text)
-        
+        try:
+            print("Model generate")
+            response = model.generate_content([prompt, img_base64], stream=True)
+            response.resolve()
+            st.write(f"Response text for Page {page_num + 1}:", response.text)
+        except Exception as e:
+            st.write(f"Error processing Page {page_num + 1}: {e}")
+
         # Add the PNG image buffer to the list
         images.append(buffer)
 
