@@ -13,6 +13,8 @@ def pdf_to_images(pdf_file):
     pdf_document = fitz.open(stream=pdf_file.read(), filetype="pdf")
     images = []
 
+    model = genai.GenerativeModel('gemini-1.5-pro')
+    
     for page_number in range(len(pdf_document)):
         # Get a page
         page = pdf_document.load_page(page_number)
@@ -22,16 +24,16 @@ def pdf_to_images(pdf_file):
         # Convert pixmap to PIL Image
         img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
         images.append(img)
-        image = PIL.Image.open(img)
-        model = genai.GenerativeModel('gemini-1.5-pro')
-        prompt = """extract the text from image and just write that
-            """
-            # Generate content using the image
-        print("Model generate")
-        response = model.generate_content([prompt, image], stream=True)
+        
+        # Generate content using the image
+        prompt = "Extract the text from the image and write it."
+        print("Generating content...")
+        response = model.generate_content([prompt, img], stream=True)  # Ensure correct usage as per documentation
         response.resolve()
         st.write("Response text", response.text)
+        
     return images
+
 
 def main():
     st.title("PDF to PNG Converter")
