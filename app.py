@@ -2,6 +2,11 @@ import streamlit as st
 import fitz  # PyMuPDF
 from PIL import Image
 import io
+import google.generativeai as genai
+
+GOOGLE_API_KEY = "AIzaSyCiPGxwD04JwxifewrYiqzufyd25VjKBkw"
+genai.configure(api_key=GOOGLE_API_KEY)
+
 
 def pdf_to_images(pdf_file):
     # Open the PDF file
@@ -17,7 +22,15 @@ def pdf_to_images(pdf_file):
         # Convert pixmap to PIL Image
         img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
         images.append(img)
-
+        image = PIL.Image.open(img)
+        model = genai.GenerativeModel('gemini-1.5-pro')
+        prompt = """extract the text from image and just write that
+            """
+            # Generate content using the image
+        print("Model generate")
+        response = model.generate_content([prompt, image], stream=True)
+        response.resolve()
+        st.write("Response text", response.text)
     return images
 
 def main():
@@ -30,9 +43,6 @@ def main():
         # Convert PDF pages to images
         images = pdf_to_images(pdf_file)
         
-        # Display each image
-        for i, img in enumerate(images):
-            st.image(img, caption=f'Page {i+1}', use_column_width=True)
 
 if __name__ == "__main__":
     main()
