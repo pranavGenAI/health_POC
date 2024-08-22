@@ -33,6 +33,44 @@ def pdf_to_images(pdf_file):
         text += response.text
     return text
 
+def process_text_in_chunks(text, chunk_size=5000):
+    chunks = [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
+    return chunks
+
+
+def extract_information_from_text(text):
+    model = genai.GenerativeModel("gemini-1.5-pro")
+    prompt_template = """
+    You have been given the text and now extract the following information:
+    1. Name
+    2. Policy no
+    3. Policy Expiration date
+    4. Coverage Limit Amount (in dollar)
+
+    Text: {text}
+    """
+    
+    consolidated_result = ""
+    for chunk in process_text_in_chunks(text):
+        prompt = prompt_template.format(text=chunk)
+        response = model.generate_content(prompt, stream=True)
+        response.resolve()
+        consolidated_result += response.text
+    
+    prompt_template_2 = """
+    You have been given the text and now extract the following information:
+    1. Name
+    2. Policy no
+    3. Policy Expiration date
+    4. Coverage Limit Amount (in dollar)
+
+    Text: {consolidated_result}
+    """
+    response = model.generate_content(prompt, stream=True)
+    response.resolve()
+    
+    return response.text
+
 
 def main():
     st.title("PDF to PNG Converter")
@@ -41,23 +79,16 @@ def main():
     pdf_file = st.file_uploader("Upload a PDF file", type=["pdf"])
 
     if pdf_file:
-        # Convert PDF pages to images
+        # Convert PDF pages to images and extract text
         text = pdf_to_images(pdf_file)
-        model = genai.GenerativeModel("gemini-1.5-pro")
-        st.write("Raw Text --",text)
+        
+        # Process the text to extract relevant information
+        st.write("Raw Text --", text)
         st.write("*******************************")
         
-        response = model.generate_content("""
-        You have been given the text and now extract the following information:
-        1.	Name
-        2.	Policy no
-        3.	Policy Expiration date
-        4.	Coverage Limit Amount (in dollar)
+        extracted_info = extract_information_from_text(text)
+        st.write(extracted_info)
 
-        Text: {text}
-        """)
-        st.write(response.text)
-        
 
 if __name__ == "__main__":
     main()
