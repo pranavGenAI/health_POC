@@ -31,6 +31,8 @@ def pdf_to_images(pdf_file):
         response = model.generate_content([prompt, img], stream=True)  # Ensure correct usage as per documentation
         response.resolve()
         text += response.text
+        
+    st.write(text)
     return text
 
 def process_text_in_chunks(text, chunk_size=5000):
@@ -68,7 +70,6 @@ def extract_information_from_text(text):
     """
     response = model.generate_content(prompt, stream=True)
     response.resolve()
-    
     return response.text
 
 
@@ -83,11 +84,10 @@ def main():
         text = pdf_to_images(pdf_file)
         
         # Process the text to extract relevant information
-        st.write("Raw Text --", text)
         st.write("*******************************")
         
-        extracted_info = extract_information_from_text(text)
-        st.write(extracted_info)
+        #extracted_info = extract_information_from_text(text)
+        #st.write(extracted_info)
 
 
 if __name__ == "__main__":
