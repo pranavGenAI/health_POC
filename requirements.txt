@@ -7,3 +7,4 @@ transformers
 pymupdf
 pytesseract
 opencv-python
+pdf2image
