@@ -4,6 +4,9 @@ import google.generativeai as genai
 import time
 import hashlib
 import json
+from pdf2image import convert_from_bytes
+import io
+import PyPDF2
 # Set page title, icon, and dark theme
 st.set_page_config(page_title="Appeals Classifier: Categorize appeal document", page_icon=">", layout="wide")
 st.markdown(
