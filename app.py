@@ -4,10 +4,8 @@ import google.generativeai as genai
 import time
 import hashlib
 import json
-import fitz  # PyMuPDF for PDF handling
-
 # Set page title, icon, and dark theme
-st.set_page_config(page_title="CAQH Document Classifier: Categorize appeal document", page_icon=">", layout="wide")
+st.set_page_config(page_title="Appeals Classifier: Categorize appeal document", page_icon=">", layout="wide")
 st.markdown(
     """
     <style>
@@ -35,6 +33,7 @@ if "username" not in st.session_state:
     st.session_state.username = ""
 
 # Configure Google Generative AI with the API key
+#GOOGLE_API_KEY = st.secrets['GEMINI_API_KEY']
 GOOGLE_API_KEY = "AIzaSyCiPGxwD04JwxifewrYiqzufyd25VjKBkw"
 genai.configure(api_key=GOOGLE_API_KEY)
 
@@ -50,13 +49,13 @@ users = {
 }
 
 def login():
-    col1, col2 = st.columns([0.3, 0.7])  # Create columns
-    with col1:
+    col1, col2= st.columns([0.3, 0.7])  # Create three columns with equal width
+    with col1:  # Center the input fields in the middle column
         st.title("Login")
         st.write("Username")
-        username = st.text_input("", label_visibility="collapsed")
+        username = st.text_input("",  label_visibility="collapsed")
         st.write("Password")
-        password = st.text_input("", type="password", label_visibility="collapsed")
+        password = st.text_input("", type="password",  label_visibility="collapsed")
         
         if st.button("Sign in"):
             hashed_password = hash_password(password)
@@ -64,7 +63,7 @@ def login():
                 st.session_state.logged_in = True
                 st.session_state.username = username
                 st.success("Logged in successfully!")
-                st.rerun()
+                st.rerun()  # Refresh to show logged-in state
             else:
                 st.error("Invalid username or password")
 
@@ -73,71 +72,53 @@ def logout():
     st.session_state.logged_in = False
     st.session_state.username = ""
     st.success("Logged out successfully!")
-    st.rerun()
+    st.rerun()  # Refresh to show logged-out state
 
-def extract_text_from_pdf(pdf_file):
-    try:
-        pdf_document = fitz.open(stream=pdf_file.read(), filetype="pdf")
-        text = ""
-        for page_num in range(len(pdf_document)):
-            page = pdf_document.load_page(page_num)
-            text += page.get_text()
-            
-        st.write("Text is ... ", text)
-        return text
-    except Exception as e:
-        st.error(f"Error reading PDF: {e}")
-        return None
+# Path to the logo image
+logo_url = "https://www.vgen.it/wp-content/uploads/2021/04/logo-accenture-ludo.png"
 
-def generate_content(content):
+def generate_content(image):
     max_retries = 10
     delay = 10
     retry_count = 0
     while retry_count < max_retries:
         try:
+            # Initialize the GenerativeModel
             print("Model definition")
             model = genai.GenerativeModel('gemini-1.5-pro')
-            prompt = """You have been given an insurance certificate as input. Now you will help me in extracting the text and return the text.
-            1. Name
-            2. Policy no
-            3. Policy Expiration date
-            4. Coverage Limit Amount (in dollars)
-            
-            Check for the above information and then write the table with data also add rationale in the end. Text : {content}        
+            prompt = """extract text from the image        
             """
+            # Generate content using the image
             print("Model generate")
-            response = model.generate_content([prompt, content], stream=True)
+            response = model.generate_content([prompt, image], stream=True)
             response.resolve()
             print("Response text", response.text)
-            return content #response.text  # Return generated text
+            return response.text  # Return generated text
         except Exception as e:
             retry_count += 1
             if retry_count == max_retries:
-                st.error(f"Error generating content: Server not available. Please try again later.")
+                st.error(f"Error generating content: Server not available. Please try again after sometime")
             time.sleep(delay)
+    
+    # Return None if all retries fail
     return None
 
 def main():
     st.title("Appeals Classifier")
-    col1, col2, col3 = st.columns([4, 1, 4])
+    col1, col2, col3 = st.columns([4,1,4])
     generated_text = ""
-    
     with col1:
-        uploaded_files = st.file_uploader("Upload appeal summary images or PDFs", type=["jpg", "jpeg", "png", "pdf"], accept_multiple_files=True)
-        if uploaded_files:
-            for uploaded_file in uploaded_files:
-                if uploaded_file.type == "application/pdf":
-                    st.write("PDF Uploaded")
-                    pdf_text = extract_text_from_pdf(uploaded_file)
-                    if pdf_text and st.button(f"Classify Appeal PDF {uploaded_files.index(uploaded_file) + 1}"):
-                        with st.spinner("Evaluating..."):
-                            generated_text = generate_content(pdf_text)
-                else:
-                    image = PIL.Image.open(uploaded_file)
-                    st.image(image, caption="", use_column_width=True)
-                    if st.button(f"Classify Appeal {uploaded_files.index(uploaded_file) + 1}"):
-                        with st.spinner("Evaluating..."):
-                            generated_text = generate_content(image)
+        # File uploader for multiple images
+        uploaded_file = st.file_uploader("Upload PDF document", type=["pdf"])   
+        if uploaded_file:
+            pages = convert_from_bytes(uploaded_file.read())
+            for uploaded_image in uploaded_images:
+                # Convert uploaded image to PIL image object
+                image_bytes = io.BytesIO()
+                page.save(image_bytes, format='PNG')
+                image_bytes.seek(0)
+                image = PIL.Image.open(image_bytes)
+                generated_text += generate_content(image)
     
     with col3:
         if generated_text:
@@ -154,7 +135,7 @@ def main():
 
 if __name__ == "__main__":
     if st.session_state.logged_in:
-        col1, col2, col3 = st.columns([10, 10, 1.5])
+        col1,col2,col3 = st.columns([10,10,1.5])
         with col3:
             if st.button("Logout"):
                 logout()
@@ -162,6 +143,8 @@ if __name__ == "__main__":
     else:
         login()
 
+
+# Custom CSS for the header and logo
 # Custom CSS for the header and logo
 st.markdown(
     """
@@ -189,7 +172,7 @@ st.markdown(
     .logo {
         height: 30px;
         width: auto;
-        margin-right: 20px;
+        margin-right: 20px;  /* Space between logo and next item */
     }
     .header-content {
         display: flex;
@@ -207,25 +190,29 @@ st.markdown(
     }
 
     .generated-text-box {
-        border: 3px solid #A020F0;
-        padding: 20px;
-        border-radius: 10px;
-        color: black;
-        background-color: #FFFFFF;
+        border: 3px solid #A020F0; /* Thick border */
+        padding: 20px;  
+        border-radius: 10px; /* Rounded corners */
+        color: black; /* Text color */
+        background-color: #FFFFFF; /* Background color matching theme */
     }
     </style>
     """,
     unsafe_allow_html=True
 )
 
+
+# Adding the logo and other elements in the header
 st.markdown(
-    """
+    f"""
     <header tabindex="-1" data-testid="stHeader" class="st-emotion-cache-12fmjuu ezrtsby2">
         <div data-testid="stDecoration" id="stDecoration" class="st-emotion-cache-1dp5vir ezrtsby1"></div>
         <div class="header-content">
+            <!-- Add the logo here -->
             <img src="https://www.vgen.it/wp-content/uploads/2021/04/logo-accenture-ludo.png" class="logo" alt="Logo">
-        </div>
+        
     </header>
+
     """,
     unsafe_allow_html=True
 )
