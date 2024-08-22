@@ -4,6 +4,7 @@ from PIL import Image
 import io
 import base64
 import google.generativeai as genai
+import time
 
 # Configure the Google Generative AI API
 GOOGLE_API_KEY = "AIzaSyCiPGxwD04JwxifewrYiqzufyd25VjKBkw"
@@ -32,14 +33,23 @@ def pdf_to_images(pdf_file):
         model = genai.GenerativeModel('gemini-1.5-pro')
         prompt = "Extract the text from this image and return only that."
         
-        # Generate content using the image
-        try:
-            print("Model generate")
-            response = model.generate_content([prompt, img_base64], stream=True)
-            response.resolve()
-            st.write(f"Response text for Page {page_num + 1}:", response.text)
-        except Exception as e:
-            st.write(f"Error processing Page {page_num + 1}: {e}")
+        # Retry mechanism with up to 5 attempts
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                print(f"Attempt {attempt + 1} to generate content")
+                response = model.generate_content([prompt, img_base64], stream=True)
+                response.resolve()
+                st.write(f"Response text for Page {page_num + 1}:", response.text)
+                break  # Exit loop if successful
+            except Exception as e:
+                if "429" in str(e):
+                    wait_time = 2 ** attempt  # Exponential backoff
+                    st.write(f"Rate limit exceeded. Retrying in {wait_time} seconds...")
+                    time.sleep(wait_time)
+                else:
+                    st.write(f"Error processing Page {page_num + 1}: {e}")
+                    break  # Exit loop if other errors occur
 
         # Add the PNG image buffer to the list
         images.append(buffer)
