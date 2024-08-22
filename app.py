@@ -107,7 +107,7 @@ def generate_content(content):
             response = model.generate_content([prompt, content], stream=True)
             response.resolve()
             print("Response text", response.text)
-            return response.text  # Return generated text
+            return content #response.text  # Return generated text
         except Exception as e:
             retry_count += 1
             if retry_count == max_retries:
