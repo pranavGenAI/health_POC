@@ -82,6 +82,8 @@ def extract_text_from_pdf(pdf_file):
         for page_num in range(len(pdf_document)):
             page = pdf_document.load_page(page_num)
             text += page.get_text()
+            
+        st.write(text)
         return text
     except Exception as e:
         st.error(f"Error reading PDF: {e}")
