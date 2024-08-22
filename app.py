@@ -105,21 +105,27 @@ def generate_content(image):
 
 def main():
     st.title("Appeals Classifier")
-    col1, col2, col3 = st.columns([4,1,4])
+    col1, col2, col3 = st.columns([4, 1, 4])
     generated_text = ""
     with col1:
-        # File uploader for multiple images
+        # File uploader for PDF document
         uploaded_file = st.file_uploader("Upload PDF document", type=["pdf"])   
         if uploaded_file:
+            # Convert PDF to images
             pages = convert_from_bytes(uploaded_file.read())
-            for uploaded_image in uploaded_images:
-                # Convert uploaded image to PIL image object
+            for page_number, page in enumerate(pages):
+                # Convert page to PIL image object
                 image_bytes = io.BytesIO()
                 page.save(image_bytes, format='PNG')
                 image_bytes.seek(0)
                 image = PIL.Image.open(image_bytes)
-                generated_text += generate_content(image)
-    
+                
+                # Generate content for each image
+                with st.spinner(f"Processing page {page_number + 1}..."):
+                    page_text = generate_content(image)
+                    if page_text:
+                        generated_text += f"Page {page_number + 1}:\n{page_text}\n\n"  # Append text with page number
+
     with col3:
         if generated_text:
             st.markdown(
