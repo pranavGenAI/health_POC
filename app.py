@@ -11,15 +11,11 @@ def pdf_to_images(pdf_file):
     for page_number in range(len(pdf_document)):
         # Get a page
         page = pdf_document.load_page(page_number)
-        # Render page to an image
+        # Render page to a pixmap
         pix = page.get_pixmap()
-        # Save image to a BytesIO object
-        img_byte_arr = io.BytesIO()
-        pix.save(img_byte_arr, format='PNG')
-        img_byte_arr.seek(0)  # Reset the stream position to the beginning
         
-        # Open image using PIL.Image.open
-        img = Image.open(img_byte_arr)
+        # Convert pixmap to PIL Image
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
         images.append(img)
 
     return images
