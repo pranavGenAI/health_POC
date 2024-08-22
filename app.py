@@ -3,9 +3,9 @@ import fitz  # PyMuPDF
 from PIL import Image
 import io
 
-def pdf_to_images(pdf_path):
-    # Open the PDF file
-    pdf_document = fitz.open(pdf_path)
+def pdf_to_images(pdf_file):
+    # Convert BytesIO object to PDF document
+    pdf_document = fitz.open(stream=pdf_file.read(), filetype="pdf")
     images = []
 
     # Convert each page to an image
