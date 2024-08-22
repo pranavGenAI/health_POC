@@ -44,12 +44,17 @@ def main():
         # Convert PDF pages to images
         text = pdf_to_images(pdf_file)
         model = genai.GenerativeModel("gemini-1.5-pro")
+        st.write("Raw Text --",text)
+        st.write("*******************************")
+        
         response = model.generate_content("""
         You have been given the text and now extract the following information:
         1.	Name
         2.	Policy no
         3.	Policy Expiration date
         4.	Coverage Limit Amount (in dollar)
+
+        Text: {text}
         """)
         st.write(response.text)
         
