@@ -8,24 +8,6 @@ import google.generativeai as genai
 GOOGLE_API_KEY = "AIzaSyCiPGxwD04JwxifewrYiqzufyd25VjKBkw"
 genai.configure(api_key=GOOGLE_API_KEY)
 
-def extract_text_from_image(image_bytes):
-    try:
-        # Initialize the generative model
-        model = genai.GenerativeModel('gemini-1.5-pro')
-        
-        # Define the prompt for text extraction
-        prompt = "Extract the text from the image and return only that."
-        
-        # Generate content using the image
-        response = model.generate_content([prompt, image_bytes], stream=True)
-        response.resolve()
-        
-        # Return the extracted text
-        return response.text
-    except Exception as e:
-        st.error(f"Error extracting text from image: {e}")
-        return None
-
 def pdf_to_images(pdf_file):
     # Convert BytesIO object to PDF document
     pdf_document = fitz.open(stream=pdf_file.read(), filetype="pdf")
@@ -36,16 +18,30 @@ def pdf_to_images(pdf_file):
         page = pdf_document.load_page(page_num)
         pix = page.get_pixmap()
         img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        
+
         # Save image as PNG in a BytesIO buffer
         buffer = io.BytesIO()
         img.save(buffer, format="PNG")
         buffer.seek(0)
         
-        # Extract text from image
-        text = extract_text_from_image(buffer)
-        if text:
-            st.write(f"Page {page_num + 1} Text: {text}")
+        # Create a PIL Image object from the buffer
+        img_pil = Image.open(buffer)
+        
+        # Convert the PIL image to a format acceptable by the API
+        img_buffer = io.BytesIO()
+        img_pil.save(img_buffer, format="PNG")
+        img_buffer.seek(0)
+
+        # Initialize the Google Gemini model
+        model = genai.GenerativeModel('gemini-1.5-pro')
+        prompt = "Extract the text from this image and return only that."
+        
+        # Generate content using the image
+        print("Model generate")
+        response = model.generate_content([prompt, img_buffer], stream=True)
+        response.resolve()
+        
+        st.write(f"Response text for Page {page_num + 1}:", response.text)
         
         # Add the PNG image buffer to the list
         images.append(buffer)
