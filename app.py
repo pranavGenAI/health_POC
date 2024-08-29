@@ -69,11 +69,10 @@ def main():
     
     # Upload PDF file
     pdf_file = st.file_uploader("Upload a PDF file", type=["pdf"])
-
     if pdf_file:
         # Convert PDF pages to images and extract text
-        text = pdf_to_images(pdf_file)        
-        st.write(text)  # Write only the last output
+        text_ = pdf_to_images(pdf_file)        
+        st.write(text_)  # Write only the last output
 
 if __name__ == "__main__":
     main()
