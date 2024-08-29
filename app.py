@@ -53,8 +53,8 @@ def pdf_to_images(pdf_file):
         
         # Convert pixmap to PIL Image
         img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        text = generate_content(img)
-        text =+ text
+        a = generate_content(img)
+        text =+ a
     return text
 
 def main():
