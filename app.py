@@ -32,7 +32,7 @@ def pdf_to_images(pdf_file):
         4. Coverage Limit Amount (in dollar):
         """
         
-        max_retries = 5
+        max_retries = 10
         for attempt in range(max_retries):
             try:
                 print("Generating content...")
