@@ -11,10 +11,10 @@ genai.configure(api_key=GOOGLE_API_KEY)
 def pdf_to_images(pdf_file):
     # Open the PDF file
     pdf_document = fitz.open(stream=pdf_file.read(), filetype="pdf")
-    images = []
-
     model = genai.GenerativeModel('gemini-1.5-pro')
-    text =""
+    
+    text = ""
+    
     for page_number in range(len(pdf_document)):
         # Get a page
         page = pdf_document.load_page(page_number)
@@ -23,56 +23,29 @@ def pdf_to_images(pdf_file):
         
         # Convert pixmap to PIL Image
         img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        images.append(img)
         
         # Generate content using the image
-        prompt = """If the some of the below information is not present in the image then keep it blank. You just need to fill in the blanks in the {text}, if you can find the information from the image. 
+        prompt = """Extract below information from the image. If some of the below information is not present in the image then keep it blank. You just need to fill in the blanks in the {text}, if you can find the information from the image. 
         1. Name:
         2. Policy no:
         3. Policy Expiration date:
         4. Coverage Limit Amount (in dollar):
         """
-        print("Generating content...")
-        response = model.generate_content([prompt, img], stream=True)  # Ensure correct usage as per documentation
-        response.resolve()
-        text += response.text
-        st.write(text)
         
-    st.write(text)
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                print("Generating content...")
+                response = model.generate_content([prompt, img], stream=True)  # Ensure correct usage as per documentation
+                response.resolve()
+                text = response.text
+                break  # Exit loop if successful
+            except Exception as e:
+                print(f"Attempt {attempt + 1} failed: {e}")
+                if attempt == max_retries - 1:
+                    st.error(f"Failed to generate content after {max_retries} attempts.")
+    
     return text
-
-def process_text_in_chunks(text, chunk_size=5000):
-    chunks = [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
-    return chunks
-
-
-def extract_information_from_text(text):
-    model = genai.GenerativeModel("gemini-1.5-pro")
-    prompt_template = """
-    
-    Text: {text}
-    """
-    
-    consolidated_result = ""
-    for chunk in process_text_in_chunks(text):
-        prompt = prompt_template.format(text=chunk)
-        response = model.generate_content(prompt, stream=True)
-        response.resolve()
-        consolidated_result += response.text
-    
-    prompt_template_2 = """
-    You have been given the text and now extract the following information:
-    1. Name
-    2. Policy no
-    3. Policy Expiration date
-    4. Coverage Limit Amount (in dollar)
-
-    Text: {consolidated_result}
-    """
-    response = model.generate_content(prompt, stream=True)
-    response.resolve()
-    return response.text
-
 
 def main():
     st.title("PDF to PNG Converter")
@@ -82,14 +55,8 @@ def main():
 
     if pdf_file:
         # Convert PDF pages to images and extract text
-        text = pdf_to_images(pdf_file)
-        
-        # Process the text to extract relevant information
-        st.write("*******************************")
-        
-        #extracted_info = extract_information_from_text(text)
-        #st.write(extracted_info)
-
+        text = pdf_to_images(pdf_file)        
+        st.write(text)  # Write only the last output
 
 if __name__ == "__main__":
     main()
