@@ -12,7 +12,7 @@ text = """
         2. Policy no:
         3. Policy Expiration date:
         4. Coverage Limit Amount (in dollar):"""
-
+dict_ = ""
 def generate_content(image):
     max_retries = 10
     delay = 10
@@ -22,14 +22,16 @@ def generate_content(image):
             # Initialize the GenerativeModel
             print("Model definition")
             model = genai.GenerativeModel('gemini-1.5-pro')
-            prompt = """Extract the below information from the image. If some of the below information is not present in the image then keep it blank. You just need to fill in the blanks below, if you can find the information from the image. 
-            {text}       
+            prompt = """Extract only the below information from the image. If some of the below information is not present in the image then keep it blank. 
+            {dict_}       
+            Output should be in json format with only Name, Policy no, Policy Expiration date, Coverage Limit Amount (in dollar) as key.
             """
             # Generate content using the image
             print("Model generate")
             response = model.generate_content([prompt, image], stream=True)
             response.resolve()
-            st.write("Response text", response.text)        
+            dict_ = response.text        
+            #st.write("Response text", response.text)        
             return none  # Return generated text
         except Exception as e:
             retry_count += 1
@@ -66,7 +68,7 @@ def main():
     if pdf_file:
         # Convert PDF pages to images and extract text
         text = pdf_to_images(pdf_file)        
-        st.write(text)  # Write only the last output
+        st.write(dict_)  # Write only the last output
 
 if __name__ == "__main__":
     main()
