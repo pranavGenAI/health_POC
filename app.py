@@ -3,6 +3,7 @@ import fitz  # PyMuPDF
 from PIL import Image
 import io
 import google.generativeai as genai
+import time  # Import time module for sleep function
 
 GOOGLE_API_KEY = "AIzaSyCiPGxwD04JwxifewrYiqzufyd25VjKBkw"
 genai.configure(api_key=GOOGLE_API_KEY)
@@ -40,10 +41,13 @@ def pdf_to_images(pdf_file):
                 response = model.generate_content([prompt, img], stream=True)  # Ensure correct usage as per documentation
                 response.resolve()
                 text = response.text
+                break  # Exit the retry loop if successful
             except Exception as e:
                 print(f"Attempt {attempt + 1} failed: {e}")
                 if attempt == max_retries - 1:
                     st.error(f"Failed to generate content after {max_retries} attempts.")
+                else:
+                    time.sleep(10)  # Wait for 10 seconds before retrying
     
     return text
 
