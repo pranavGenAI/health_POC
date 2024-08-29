@@ -26,7 +26,7 @@ def pdf_to_images(pdf_file):
         images.append(img)
         
         # Generate content using the image
-        prompt = """Extract the below text from the image. If the some of the below information is not present in the image then keep it blank. You just need to fill in the blanks if you can find the information from the image. 
+        prompt = """Extract the below text from the image. If the some of the below information is not present in the image then keep it blank. You just need to fill in the blanks in the {text}, if you can find the information from the image. 
         1. Name:
         2. Policy no:
         3. Policy Expiration date:
