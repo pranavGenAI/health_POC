@@ -29,8 +29,8 @@ def generate_content(image):
             print("Model generate")
             response = model.generate_content([prompt, image], stream=True)
             response.resolve()
-            print("Response text", response.text)
-            return response.text  # Return generated text
+            st.write("Response text", response.text)        
+            return none  # Return generated text
         except Exception as e:
             retry_count += 1
             if retry_count == max_retries:
@@ -53,8 +53,8 @@ def pdf_to_images(pdf_file):
         
         # Convert pixmap to PIL Image
         img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        a = generate_content(img)
-        text =+ a
+        generate_content(img)
+        
     return text
 
 def main():
