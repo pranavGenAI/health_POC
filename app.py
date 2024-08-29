@@ -26,7 +26,12 @@ def pdf_to_images(pdf_file):
         images.append(img)
         
         # Generate content using the image
-        prompt = "Extract the text from the image and write it."
+        prompt = """Extract the below text from the image. If the some of the below information is not present in the image then keep it blank. You just need to fill in the blanks if you can find the information from the image. 
+        1. Name:
+        2. Policy no:
+        3. Policy Expiration date:
+        4. Coverage Limit Amount (in dollar):
+        """
         print("Generating content...")
         response = model.generate_content([prompt, img], stream=True)  # Ensure correct usage as per documentation
         response.resolve()
@@ -43,12 +48,7 @@ def process_text_in_chunks(text, chunk_size=5000):
 def extract_information_from_text(text):
     model = genai.GenerativeModel("gemini-1.5-pro")
     prompt_template = """
-    You have been given the text and now extract the following information:
-    1. Name
-    2. Policy no
-    3. Policy Expiration date
-    4. Coverage Limit Amount (in dollar)
-
+    
     Text: {text}
     """
     
