@@ -36,7 +36,7 @@ def pdf_to_images(pdf_file):
         response = model.generate_content([prompt, img], stream=True)  # Ensure correct usage as per documentation
         response.resolve()
         text += response.text
-        print(text)
+        st.write(text)
         
     st.write(text)
     return text
