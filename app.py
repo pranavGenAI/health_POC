@@ -7,18 +7,43 @@ import time  # Import time module for sleep function
 
 GOOGLE_API_KEY = "AIzaSyCiPGxwD04JwxifewrYiqzufyd25VjKBkw"
 genai.configure(api_key=GOOGLE_API_KEY)
+text = """
+        1. Name:
+        2. Policy no:
+        3. Policy Expiration date:
+        4. Coverage Limit Amount (in dollar):"""
+
+def generate_content(image):
+    max_retries = 10
+    delay = 10
+    retry_count = 0
+    while retry_count < max_retries:
+        try:
+            # Initialize the GenerativeModel
+            print("Model definition")
+            model = genai.GenerativeModel('gemini-1.5-pro')
+            prompt = """Extract the below information from the image. If some of the below information is not present in the image then keep it blank. You just need to fill in the blanks below, if you can find the information from the image. 
+            {text}       
+            """
+            # Generate content using the image
+            print("Model generate")
+            response = model.generate_content([prompt, image], stream=True)
+            response.resolve()
+            print("Response text", response.text)
+            return response.text  # Return generated text
+        except Exception as e:
+            retry_count += 1
+            if retry_count == max_retries:
+                st.error(f"Error generating content: Server not available. Please try again after sometime")
+            time.sleep(delay)
+    
+    # Return None if all retries fail
+    return None
 
 
 def pdf_to_images(pdf_file):
     # Open the PDF file
     pdf_document = fitz.open(stream=pdf_file.read(), filetype="pdf")
-    model = genai.GenerativeModel('gemini-1.5-pro')
-    
-    text = """
-        1. Name:
-        2. Policy no:
-        3. Policy Expiration date:
-        4. Coverage Limit Amount (in dollar):"""
     
     for page_number in range(len(pdf_document)):
         # Get a page
@@ -28,27 +53,8 @@ def pdf_to_images(pdf_file):
         
         # Convert pixmap to PIL Image
         img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        
-        # Generate content using the image
-        prompt = """If some of the below information is not present in the image then keep it blank. You just need to fill in the blanks below, if you can find the information from the image. 
-        {text}
-        """
-        
-        max_retries = 5
-        for attempt in range(max_retries):
-            try:
-                print("Generating content...")
-                response = model.generate_content([prompt, img], stream=True)  # Ensure correct usage as per documentation
-                response.resolve()
-                text = response.text
-                break  # Exit the retry loop if successful
-            except Exception as e:
-                print(f"Attempt {attempt + 1} failed: {e}")
-                if attempt == max_retries - 1:
-                    st.error(f"Failed to generate content after {max_retries} attempts.")
-                else:
-                    time.sleep(10)  # Wait for 10 seconds before retrying
-    
+        text = generate_content(img)
+        text =+ text
     return text
 
 def main():
