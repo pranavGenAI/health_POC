@@ -1,78 +1,52 @@
 import streamlit as st
-import fitz  # PyMuPDF
-from PIL import Image
+import pandas as pd
 import io
 import google.generativeai as genai
-import time  # Import time module for sleep function
-count = 0 
+
+# Initialize Google Gemini API
 GOOGLE_API_KEY = "AIzaSyCiPGxwD04JwxifewrYiqzufyd25VjKBkw"
 genai.configure(api_key=GOOGLE_API_KEY)
-text = ""
+model = genai.GenerativeModel('gemini-1.5-pro')
 
-def generate_content(image):
-    max_retries = 10
-    delay = 10
-    retry_count = 0
-    while retry_count < max_retries:
-        try:
-            # Initialize the GenerativeModel
-            print("Model definition")
-            model = genai.GenerativeModel('gemini-1.5-pro')
-            prompt = """Extract only the below information from the image.
-            1. Name:
-            2. Policy no:
-            3. Policy Expiration date:
-            4. Coverage Limit Amount (in dollar):
-            """
-            # Generate content using the image
-            print("Model generate", dict_)
-            response = model.generate_content([prompt, image], stream=True)
-            response.resolve()
-            dict_ = response.text        
-            #st.write("Response text", response.text)        
-            return response.text  # Return generated text
-        except Exception as e:
-            retry_count += 1
-            if retry_count == max_retries:
-                st.error(f"Error generating content: Server not available. Please try again after sometime")
-            time.sleep(delay)
+def classify_text(text):
+    prompt = f"""Analyze the text and classify it into either of the below categories: GenAI Strategy & Adoption, AI Strategy & Data Governance, Data Analytics & Reporting, AI Polity & Responsible AI
+
+Text to classify: {text}
+
+only return the classification category only"""
     
-    # Return None if all retries fail
-    return None
-
-def pdf_to_images(pdf_file):
-    global count  # Use the global count variable
-    # Open the PDF file
-    pdf_document = fitz.open(stream=pdf_file.read(), filetype="pdf")
-    
-    for page_number in range(len(pdf_document)):
-        count += 1  # Increment count
-
-        if count > 2:
-            # Get a page
-            page = pdf_document.load_page(page_number)
-            # Render page to a pixmap
-            pix = page.get_pixmap()
-            
-            # Convert pixmap to PIL Image
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-            
-            # Generate content using the image
-            text = generate_content(img)  # Assuming you want to store the result in `text`
-        else:
-            break
-
-    return text
+    response = model.generate_content(prompt)
+    return response.text.strip()
 
 def main():
-    st.title("PDF to PNG Converter")
-    
-    # Upload PDF file
-    pdf_file = st.file_uploader("Upload a PDF file", type=["pdf"])
-    if pdf_file:
-        # Convert PDF pages to images and extract text
-        text_ = pdf_to_images(pdf_file)        
-        st.write(text_)  # Write only the last output
+    st.title('Excel File Classifier')
+
+    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+    if uploaded_file is not None:
+        # Load the Excel file
+        df = pd.read_excel(uploaded_file)
+
+        # Check if column A exists
+        if 'A' not in df.columns:
+            st.error("Column A is missing in the uploaded file.")
+            return
+
+        if st.button('Classify Text'):
+            # Scan Column A and classify
+            df['B'] = df['A'].apply(lambda x: classify_text(x))
+            
+            # Save the updated DataFrame to a new Excel file
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                df.to_excel(writer, index=False, sheet_name='Sheet1')
+            
+            output.seek(0)
+            st.download_button(
+                label="Download Updated Excel File",
+                data=output,
+                file_name="classified_texts.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
 if __name__ == "__main__":
     main()
