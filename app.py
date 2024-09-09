@@ -142,7 +142,7 @@ def main():
             st.markdown(
                 f"""
                 <div class="generated-text-box">
-                    <h3>Classification Result:</h3>
+                    <h3>Extraction Result:</h3>
                     <p>{generated_text}</p>
                 </div>
                 """,
