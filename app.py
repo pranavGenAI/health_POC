@@ -86,7 +86,7 @@ def generate_content(image):
             # Initialize the GenerativeModel
             print("Model definition")
             model = genai.GenerativeModel('gemini-1.5-pro')
-            prompt = """You have been given insurance certificate as input. Write the names of providers covered, the policy numbers and policy expiration dates. Also, check if any dollar amount is mentioned in the overall image. If yes then return Yes and if no then return No"""
+            prompt = """You have been given insurance certificate as input. Write the names of providers covered under the policy (It should be name of individual/s and not company), the policy numbers and policy expiration dates. Also, check if any dollar amount is mentioned in the overall image. If yes then return Yes and if no then return No"""
             # Generate content using the image
             print("Model generate")
             response = model.generate_content([prompt, image], stream=True)
