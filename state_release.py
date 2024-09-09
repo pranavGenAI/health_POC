@@ -108,7 +108,7 @@ def main():
     generated_text = ""
     with col1:
         # File uploader for multiple images
-        uploaded_images = st.file_uploader("", type=["jpg", "jpeg", "png"], accept_multiple_files=True)   
+        uploaded_images = st.file_uploader("", type=["jpg", "jpeg", "png"], accept_multiple_files=True, label_visibility="collapsed")   
         if uploaded_images:
             for uploaded_image in uploaded_images:
                 # Convert uploaded image to PIL image object
