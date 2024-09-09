@@ -109,6 +109,16 @@ def main():
     with col1:
         # File uploader for multiple images
         uploaded_images = st.file_uploader("", type=["jpg", "jpeg", "png"], accept_multiple_files=True, label_visibility="collapsed")   
+                
+        # Apply custom CSS to hide the class
+        st.markdown("""
+            <style>
+            .st-emotion-cache-fis6aj.e1b2p2ww10 {
+                display: none;
+            }
+            </style>
+            """, unsafe_allow_html=True)   
+        
         if uploaded_images:
             for uploaded_image in uploaded_images:
                 # Convert uploaded image to PIL image object
