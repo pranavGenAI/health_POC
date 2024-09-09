@@ -5,7 +5,7 @@ import time
 import hashlib
 import json
 # Set page title, icon, and dark theme
-st.set_page_config(page_title="Appeals Classifier: Categorize appeal document", page_icon=">", layout="wide")
+st.set_page_config(page_title="Insurance Data Extraction", page_icon=">", layout="wide")
 st.markdown(
     """
     <style>
@@ -116,9 +116,9 @@ def main():
 
                 # Determine button label based on number of uploaded images
                 if len(uploaded_images) > 1:
-                    button_label = f"Classify Appeal {uploaded_images.index(uploaded_image) + 1}"
+                    button_label = f"Extract data {uploaded_images.index(uploaded_image) + 1}"
                 else:
-                    button_label = "Classify Appeal"
+                    button_label = "Extract data"
 
                 # Button to classify appeal
                 if st.button(button_label):
