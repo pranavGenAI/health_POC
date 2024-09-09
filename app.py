@@ -103,7 +103,7 @@ def generate_content(image):
     return None
 
 def main():
-    st.title("Appeals Classifier")
+    st.title("Insurance Data Extraction")
     col1, col2, col3 = st.columns([4,1,4])
     generated_text = ""
     with col1:
