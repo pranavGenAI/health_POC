@@ -109,15 +109,19 @@ def main():
     with col1:
         # File uploader for multiple images
         uploaded_images = st.file_uploader("", type=["jpg", "jpeg", "png"], accept_multiple_files=True, label_visibility="collapsed")   
-                
-        # Apply custom CSS to hide the class
+                        
+                # Apply custom CSS to hide the class
         st.markdown("""
             <style>
             .st-emotion-cache-fis6aj.e1b2p2ww10 {
-                display: none;
+                background-color: #F0F0F0; /* Light gray background */
+                color: black;  /* Black text color */
+            }
+            body {
+                background-color: white;   /* White background for the entire body */
             }
             </style>
-            """, unsafe_allow_html=True)   
+            """, unsafe_allow_html=True)
         
         if uploaded_images:
             for uploaded_image in uploaded_images:
