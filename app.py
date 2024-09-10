@@ -113,7 +113,7 @@ def main():
         st.markdown("""
             <style>
             .st-emotion-cache-fis6aj.e1b2p2ww10 {
-                background: linear-gradient(120deg, #FF007F, #A020F0 100%) !important; /* Gradient background */
+                background-color: #F0F0F0;
                 color: black;                
             }
             body {
