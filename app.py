@@ -122,6 +122,7 @@ def main():
             </style>
             """, unsafe_allow_html=True)
 
+
         if uploaded_images:
             for uploaded_image in uploaded_images:
                 # Convert uploaded image to PIL image object
