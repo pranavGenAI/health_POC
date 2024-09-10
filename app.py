@@ -113,11 +113,14 @@ def main():
         st.markdown("""
             <style>
             .st-emotion-cache-fis6aj.e1b2p2ww10 {
-                display: none;
+                background-color: white;
+            }
+            body {
+                background-color: white;
             }
             </style>
-            """, unsafe_allow_html=True)   
-        
+            """, unsafe_allow_html=True)
+
         if uploaded_images:
             for uploaded_image in uploaded_images:
                 # Convert uploaded image to PIL image object
