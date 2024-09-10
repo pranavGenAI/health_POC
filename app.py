@@ -113,7 +113,8 @@ def main():
         st.markdown("""
             <style>
             .st-emotion-cache-fis6aj.e1b2p2ww10 {
-                background-color: white;
+                background-color: #1E1E1E;
+                color: black;                
             }
             body {
                 background-color: white;
