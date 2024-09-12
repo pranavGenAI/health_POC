@@ -86,7 +86,7 @@ def generate_content(image):
             # Initialize the GenerativeModel
             print("Model definition")
             model = genai.GenerativeModel('gemini-1.5-pro')
-            prompt = """You have been given State Release certificate as input. Check if signature and name is mentioned in the document. Also, write the signature date. Return a JSON output with Key (value) as Name (Present/Absent), Signature (Present/Absent), Date (Value) """
+            prompt = """You have been given State Release certificate as input. Check if signature and name is mentioned in the document. Also, write the signature date. Return a better formatted output as Name (Present/Absent), Signature (Present/Absent), Date (Value) """
             # Generate content using the image
             print("Model generate")
             response = model.generate_content([prompt, image], stream=True)
