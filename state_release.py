@@ -4,8 +4,12 @@ import google.generativeai as genai
 import time
 import hashlib
 import json
+from uuid import uuid4  # To generate unique IDs for each case
+
 # Set page title, icon, and dark theme
 st.set_page_config(page_title="State Release Data Extraction", page_icon=">", layout="wide")
+
+# CSS for styling
 st.markdown(
     """
     <style>
@@ -31,16 +35,20 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "username" not in st.session_state:
     st.session_state.username = ""
+if "document_queue" not in st.session_state:
+    st.session_state.document_queue = {}
+if "validated_queue" not in st.session_state:
+    st.session_state.validated_queue = {}
 
 # Configure Google Generative AI with the API key
-#GOOGLE_API_KEY = st.secrets['GEMINI_API_KEY']
+# GOOGLE_API_KEY = st.secrets['GEMINI_API_KEY']
 GOOGLE_API_KEY = "AIzaSyCiPGxwD04JwxifewrYiqzufyd25VjKBkw"
 genai.configure(api_key=GOOGLE_API_KEY)
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# Define users and hashed passwords for simplicity
+# Define users and hashed passwords
 users = {
     "ankur.d.shrivastav": hash_password("ankur123"),
     "sashank.vaibhav.allu": hash_password("sashank123"),
@@ -49,13 +57,11 @@ users = {
 }
 
 def login():
-    col1, col2= st.columns([0.3, 0.7])  # Create three columns with equal width
-    with col1:  # Center the input fields in the middle column
+    col1, col2 = st.columns([0.3, 0.7])
+    with col1:
         st.title("Login")
-        st.write("Username")
-        username = st.text_input("",  label_visibility="collapsed")
-        st.write("Password")
-        password = st.text_input("", type="password",  label_visibility="collapsed")
+        username = st.text_input("Username", label_visibility="collapsed")
+        password = st.text_input("Password", type="password", label_visibility="collapsed")
         
         if st.button("Sign in"):
             hashed_password = hash_password(password)
@@ -63,101 +69,88 @@ def login():
                 st.session_state.logged_in = True
                 st.session_state.username = username
                 st.success("Logged in successfully!")
-                st.rerun()  # Refresh to show logged-in state
+                st.rerun()
             else:
                 st.error("Invalid username or password")
 
 def logout():
-    # Clear session state on logout
     st.session_state.logged_in = False
     st.session_state.username = ""
     st.success("Logged out successfully!")
-    st.rerun()  # Refresh to show logged-out state
+    st.rerun()
 
-# Path to the logo image
-logo_url = "https://www.vgen.it/wp-content/uploads/2021/04/logo-accenture-ludo.png"
-
+# Function to generate content from the image using Generative AI
 def generate_content(image):
     max_retries = 10
     delay = 10
     retry_count = 0
     while retry_count < max_retries:
         try:
-            # Initialize the GenerativeModel
-            print("Model definition")
             model = genai.GenerativeModel('gemini-1.5-pro')
-            prompt = """You have been given State Release certificate as input. Check if signature and name is mentioned in the document. Also, write the signature date. Return a better formatted output as Name (Present/Absent), Signature (Present/Absent), Date (Value) """
-            # Generate content using the image
-            print("Model generate")
+            prompt = """You have been given a State Release certificate as input. Check if the signature and name are mentioned in the document. Also, write the signature date. Return a well-formatted output as Name (Present/Absent), Signature (Present/Absent), Date (Value)"""
             response = model.generate_content([prompt, image], stream=True)
             response.resolve()
-            print("Response text", response.text)
-            return response.text  # Return generated text
-        except Exception as e:
+            return response.text
+        except Exception:
             retry_count += 1
             if retry_count == max_retries:
-                st.error(f"Error generating content: Server not available. Please try again after sometime")
+                st.error("Error generating content: Server not available. Please try again later.")
             time.sleep(delay)
-    
-    # Return None if all retries fail
     return None
+
+def add_to_queue(image, extracted_data):
+    # Generate a unique ID for each document
+    unique_id = str(uuid4())
+    # Add to document queue
+    st.session_state.document_queue[unique_id] = {
+        "image": image,
+        "extracted_data": extracted_data
+    }
+    st.success(f"Document added to queue with ID: {unique_id}")
 
 def main():
     st.title("State Release Data Extraction")
-    col1, col2, col3 = st.columns([4,1,4])
-    generated_text = ""
-    with col1:
-        # File uploader for multiple images
-        uploaded_images = st.file_uploader("", type=["jpg", "jpeg", "png"], accept_multiple_files=True, label_visibility="collapsed")   
-                        
-                # Apply custom CSS to hide the class
-        st.markdown("""
-            <style>
-            .st-emotion-cache-fis6aj.e1b2p2ww10 {
-                background-color: #F0F0F0; /* Light gray background */
-                color: black;  /* Black text color */
-            }
-            body {
-                background-color: white;   /* White background for the entire body */
-            }
-            </style>
-            """, unsafe_allow_html=True)
-        
-        if uploaded_images:
-            for uploaded_image in uploaded_images:
-                # Convert uploaded image to PIL image object
-                image = PIL.Image.open(uploaded_image)
 
-                # Determine button label based on number of uploaded images
-                if len(uploaded_images) > 1:
-                    button_label = f"Extract data {uploaded_images.index(uploaded_image) + 1}"
-                else:
-                    button_label = "Extract data"
+    # Create tabs for Document Queue and Validated Queue
+    tab1, tab2 = st.tabs(["Document Queue", "Validated Queue"])
 
-                # Button to classify appeal
-                if st.button(button_label):
-                    with st.spinner("Evaluating..."):
-                        # Generate content using the image
-                        generated_text = generate_content(image)
+    # Document Queue tab
+    with tab1:
+        st.subheader("Upload Document")
+        uploaded_image = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
-                st.image(uploaded_image, caption="", use_column_width=True)
-    
-    with col3:
-        if generated_text:
-            st.markdown(
-                f"""
-                <div class="generated-text-box">
-                    <h3>Extraction Result:</h3>
-                    <p>{generated_text}</p>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            st.markdown("***")
+        if uploaded_image:
+            image = PIL.Image.open(uploaded_image)
+            if st.button("Extract and Add to Queue"):
+                with st.spinner("Extracting data..."):
+                    extracted_data = generate_content(image)
+                    if extracted_data:
+                        st.image(uploaded_image, caption="Uploaded Image", use_column_width=True)
+                        st.text(extracted_data)
+                        add_to_queue(image, extracted_data)
+                    else:
+                        st.error("Failed to extract data. Please try again.")
+
+        st.subheader("Document Queue")
+        for doc_id, doc_info in st.session_state.document_queue.items():
+            if st.button(f"View Document {doc_id}"):
+                st.image(doc_info["image"], caption=f"Document ID: {doc_id}", use_column_width=True)
+                st.text(doc_info["extracted_data"])
+
+    # Validated Queue tab
+    with tab2:
+        st.subheader("Validated Documents")
+        if st.session_state.validated_queue:
+            for doc_id, doc_info in st.session_state.validated_queue.items():
+                if st.button(f"View Validated Document {doc_id}"):
+                    st.image(doc_info["image"], caption=f"Validated Document ID: {doc_id}", use_column_width=True)
+                    st.text(doc_info["extracted_data"])
+        else:
+            st.write("No validated documents available.")
 
 if __name__ == "__main__":
     if st.session_state.logged_in:
-        col1,col2,col3 = st.columns([10,10,1.5])
+        col1, col2, col3 = st.columns([10, 10, 1.5])
         with col3:
             if st.button("Logout"):
                 logout()
@@ -165,9 +158,7 @@ if __name__ == "__main__":
     else:
         login()
 
-
-# Custom CSS for the header and logo
-# Custom CSS for the header and logo
+# Custom CSS for header and layout
 st.markdown(
     """
     <style>
@@ -177,9 +168,6 @@ st.markdown(
         background-color: #f0f0f0;
         color: black;
         font-family: 'Graphik', sans-serif;
-    }
-    .main {
-        background-color: #f0f0f0;
     }
     .stApp {
         background-color: #f0f0f0;
@@ -194,47 +182,27 @@ st.markdown(
     .logo {
         height: 30px;
         width: auto;
-        margin-right: 20px;  /* Space between logo and next item */
     }
-    .header-content {
-        display: flex;
-        align-items: center;
-    }
-    .header-right {
-        display: flex;
-        align-items: center;
-    }
-
-    h1 {
-        color: black;
-        margin: 0;
-        padding: 0;
-    }
-
     .generated-text-box {
-        border: 3px solid #A020F0; /* Thick border */
-        padding: 20px;  
-        border-radius: 10px; /* Rounded corners */
-        color: black; /* Text color */
-        background-color: #FFFFFF; /* Background color matching theme */
+        border: 3px solid #A020F0;
+        padding: 20px;
+        border-radius: 10px;
+        background-color: #FFFFFF;
+        color: black;
     }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-
-# Adding the logo and other elements in the header
+# Header with logo
 st.markdown(
-    f"""
-    <header tabindex="-1" data-testid="stHeader" class="st-emotion-cache-12fmjuu ezrtsby2">
-        <div data-testid="stDecoration" id="stDecoration" class="st-emotion-cache-1dp5vir ezrtsby1"></div>
+    """
+    <header tabindex="-1" data-testid="stHeader">
         <div class="header-content">
-            <!-- Add the logo here -->
             <img src="https://www.vgen.it/wp-content/uploads/2021/04/logo-accenture-ludo.png" class="logo" alt="Logo">
-        
+        </div>
     </header>
-
     """,
     unsafe_allow_html=True
 )
