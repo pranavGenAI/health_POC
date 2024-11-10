@@ -87,7 +87,7 @@ def generate_content(image):
     while retry_count < max_retries:
         try:
             model = genai.GenerativeModel('gemini-1.5-pro')
-            prompt = """You have been given a State Release certificate as input. Check if the signature and name are mentioned in the document. Also, write the signature date. Return a well-formatted output as Name (Present/Absent), Signature (Present/Absent), Date (Value)"""
+            prompt = """extract all information in Marathi """
             response = model.generate_content([prompt, image], stream=True)
             response.resolve()
             return response.text
